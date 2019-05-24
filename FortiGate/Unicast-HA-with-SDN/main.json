@@ -71,7 +71,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri":"https://www.holecek.eu/~oho/azure/global.json",
+					"uri":"https%3A%2F%2Fraw.githubusercontent.com%2Fondrejholecek%2Fazure-templates%2Fmaster%2FFortiGate%2FUnicast-HA-with-SDN%2Fglobal.json",
 					"contentVersion":"1.0.0.0"
 				},
 				"parameters": {
@@ -86,7 +86,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri":"https://www.holecek.eu/~oho/azure/network-routing-table.json",
+					"uri":"https%3A%2F%2Fraw.githubusercontent.com%2Fondrejholecek%2Fazure-templates%2Fmaster%2FFortiGate%2FUnicast-HA-with-SDN%2Fnetwork-routing-table.json",
 					"contentVersion":"1.0.0.0"
 				},
 				"parameters": {
@@ -110,7 +110,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri":"https://www.holecek.eu/~oho/azure/network-vnet.json",
+					"uri":"https%3A%2F%2Fraw.githubusercontent.com%2Fondrejholecek%2Fazure-templates%2Fmaster%2FFortiGate%2FUnicast-HA-with-SDN%2Fnetwork-vnet.json",
 					"contentVersion":"1.0.0.0"
 				},
 				"parameters": {
@@ -132,7 +132,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri":"https://www.holecek.eu/~oho/azure/network-public-ips.json",
+					"uri":"https%3A%2F%2Fraw.githubusercontent.com%2Fondrejholecek%2Fazure-templates%2Fmaster%2FFortiGate%2FUnicast-HA-with-SDN%2Fnetwork-public-ips.json",
 					"contentVersion":"1.0.0.0"
 				},
 				"parameters": {
@@ -157,7 +157,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri":"https://www.holecek.eu/~oho/azure/fortigate.json",
+					"uri":"https%3A%2F%2Fraw.githubusercontent.com%2Fondrejholecek%2Fazure-templates%2Fmaster%2FFortiGate%2FUnicast-HA-with-SDN%2Ffortigate.json",
 					"contentVersion":"1.0.0.0"
 				},
 				"parameters": {
@@ -203,7 +203,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri":"https://www.holecek.eu/~oho/azure/fortigate.json",
+					"uri":"https%3A%2F%2Fraw.githubusercontent.com%2Fondrejholecek%2Fazure-templates%2Fmaster%2FFortiGate%2FUnicast-HA-with-SDN%2Ffortigate.json",
 					"contentVersion":"1.0.0.0"
 				},
 				"parameters": {
@@ -249,7 +249,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri":"https://www.holecek.eu/~oho/azure/linux.json",
+					"uri":"https%3A%2F%2Fraw.githubusercontent.com%2Fondrejholecek%2Fazure-templates%2Fmaster%2FFortiGate%2FUnicast-HA-with-SDN%2Flinux.json",
 					"contentVersion":"1.0.0.0"
 				},
 				"parameters": {
