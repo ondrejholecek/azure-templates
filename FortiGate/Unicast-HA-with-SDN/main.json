@@ -1,0 +1,268 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"metadata": {
+		"comments": "This template is meant for support people to quickly test different FortiGate features in Azure.",
+		"author": "Ondrej Holecek <oholecek@fortinet.com>"
+	},
+	"parameters": {
+		"LicenseType": {
+			"type": "string",
+			"defaultValue": "Bring Your Own License",
+			"allowedValues": [
+				"Bring Your Own License",
+				"Pay As You Go"
+			],
+			"metadata": { "description": "Use \"Bring Your Own License\" to reduce cost whenever possible." }
+		},
+		"FortiosVersion": {
+			"type": "String",
+			"defaultValue": "latest",
+			"metadata": { "description": "Be careful because not all versions are present on Azure. Use \"latest\" if not sure." }
+		},
+		"FortigateAName": {
+			"type": "String",
+			"defaultValue": "FortiGateA",
+			"metadata": { "description": "Name of the first FortiGate VM. Its interface names will be also based on this." }
+		},
+		"FortigateBName": {
+			"type": "String",
+			"defaultValue": "FortiGateB",
+			"metadata": { "description": "Name of the second FortiGate VM. Its interface names will be also based on this." }
+		},
+		"LinuxClientName": {
+			"type": "String",
+			"defaultValue": "LinuxClient",
+			"metadata": { "description": "Name of the Linux client VM. Its interface name will be also based on this." }
+		},
+		"VirtualNetworkName": {
+			"defaultValue": "VirtualNetwork",
+			"type": "String",
+			"metadata": { "description": "Name of the virtual network everything will be based in." }
+		},
+		"AdminUsername": {
+			"defaultValue": "supporttest",
+			"type": "String"
+		},
+		"AdminPassword": {
+			"type": "SecureString"
+		},
+		"HaApplicationId": {
+			"type": "String"
+		},
+		"HaApplicationSecret": {
+			"type": "String"
+		},
+		"MyIpAddress": {
+			"type": "String",
+			"metadata": { "description": "This IP address will be added to the \"inside\" routing table with \"Internet\" as destination, so you can connect to the public IP of the Linux Client from it." }
+		}
+	},
+	"variables": {
+		"StorageAccountName": "[concat('storage', uniqueString(resourceGroup().id, deployment().name))]",
+		"FortigateSize": "Standard_F4",
+		"LinuxClientSize": "Standard_B1ls"
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "globalObjects",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri":"https://www.holecek.eu/~oho/azure/global.json",
+					"contentVersion":"1.0.0.0"
+				},
+				"parameters": {
+					"StorageAccountName": { "value": "[variables('StorageAccountName')]" }
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "routingTableInside",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri":"https://www.holecek.eu/~oho/azure/network-routing-table.json",
+					"contentVersion":"1.0.0.0"
+				},
+				"parameters": {
+					"TableName": { "value": "RoutingTable-inside" },
+					"Routes": { "value": [
+						{ "name": "toDefault"     ,"prefix": "0.0.0.0/0"         ,"nh": "VirtualAppliance" ,"gw": "10.99.2.4" },
+						{ "name": "PragueOffice"  ,"prefix": "193.85.189.20/32"  ,"nh": "Internet"         ,"gw": "" },
+						{ "name": "PragueLab"     ,"prefix": "193.86.26.196/32"  ,"nh": "Internet"         ,"gw": "" },
+						{ "name": "MyIP", "prefix": "[concat(parameters('MyIpAddress'), '/32')]", "nh": "Internet", "gw": "" }
+					]}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "virtualNetwork",
+			"dependsOn": [
+				"[resourceid('Microsoft.Resources/deployments', 'routingTableInside')]" 
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri":"https://www.holecek.eu/~oho/azure/network-vnet.json",
+					"contentVersion":"1.0.0.0"
+				},
+				"parameters": {
+					"VirtualNetworkName": { "value": "[parameters('VirtualNetworkName')]" },
+					"AddressSpace": { "value": "10.99.0.0/16" },
+					"Subnets": { "value": [
+						{ "name": "outside"    ,"prefix": "10.99.1.0/24"     ,"rtable": "[json('null')]" },
+						{ "name": "inside"     ,"prefix": "10.99.2.0/24"     ,"rtable": { "id": "[resourceid('Microsoft.Network/routeTables', 'RoutingTable-inside')]" } },
+						{ "name": "management" ,"prefix": "10.99.3.0/24"     ,"rtable": "[json('null')]" },
+						{ "name": "ha"         ,"prefix": "10.99.4.0/24"     ,"rtable": "[json('null')]" }
+					]}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "publicIpAddresses",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri":"https://www.holecek.eu/~oho/azure/network-public-ips.json",
+					"contentVersion":"1.0.0.0"
+				},
+				"parameters": {
+					"PublicIPs": { "value": [
+						{ "name": "FortiGate-shared-IP"                                ,"hostname": "[concat('fgtpublicip' , uniqueString(resourceGroup().id, deployment().name))]"  },
+						{ "name": "[concat(parameters('FortigateAName'), '-mgmt-IP')]" ,"hostname": "[concat('fgtapublicip', uniqueString(resourceGroup().id, deployment().name))]"  },
+						{ "name": "[concat(parameters('FortigateBName'), '-mgmt-IP')]" ,"hostname": "[concat('fgtbpublicip', uniqueString(resourceGroup().id, deployment().name))]"  },
+						{ "name": "LinuxClient-public-IP"                              ,"hostname": "[concat('linpublicip' , uniqueString(resourceGroup().id, deployment().name))]"  }
+					]}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "FortigateA",
+			"dependsOn": [
+				"[resourceid('Microsoft.Resources/deployments', 'virtualNetwork')]",
+				"[resourceid('Microsoft.Resources/deployments', 'publicIpAddresses')]",
+				"[resourceid('Microsoft.Resources/deployments', 'globalObjects')]" 
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri":"https://www.holecek.eu/~oho/azure/fortigate.json",
+					"contentVersion":"1.0.0.0"
+				},
+				"parameters": {
+					"VmSize": { "value": "[variables('FortigateSize')]" },
+					"Sku": { "value": "[if(equals(parameters('LicenseType'),'Pay As You Go'),'fortinet_fg-vm_payg','fortinet_fg-vm')]" },
+					"FortiosVersion": { "value": "[parameters('FortiosVersion')]" },
+					"FortigateName": { "value": "[parameters('FortigateAName')]" },
+					"Username": { "value": "[parameters('AdminUsername')]" },
+					"Password": { "value": "[parameters('AdminPassword')]" },
+					"StorageAccountName": { "value": "[variables('StorageAccountName')]" },
+					"VirtualNetworkName": { "value": "[parameters('VirtualNetworkName')]" },
+					"Configuration": { "value": {
+						"haMy": "10.99.4.4",
+						"haPeer": "10.99.4.5",
+						"haPriority": "200",
+						"managementGw": "10.99.3.1",
+						"applicationId": "[parameters('HaApplicationId')]",
+						"applicationSecret": "[parameters('HaApplicationSecret')]",
+						"haPublicNicName": "[concat(parameters('FortigateAName'), '-port1')]",
+						"haPublicIpName": "FortiGate-shared-IP",
+						"haRoutingTableName": "RoutingTable-inside",
+						"haRouteName": "toDefault",
+						"haRoutingTableGw": "10.99.2.4"
+					}},
+					"Interfaces": { "value": [
+						{ "name": "port1"  ,"subnet": "outside"    ,"ip": "10.99.1.4",  "public": { "id": "[resourceid('Microsoft.Network/publicIPAddresses', 'FortiGate-shared-IP')]" } },
+						{ "name": "port2"  ,"subnet": "inside"     ,"ip": "10.99.2.4",  "public": "[json('null')]" },
+						{ "name": "port3"  ,"subnet": "management" ,"ip": "10.99.3.4",  "public": { "id": "[resourceid('Microsoft.Network/publicIPAddresses', concat(parameters('FortigateAName'), '-mgmt-IP'))]" } },
+						{ "name": "port4"  ,"subnet": "ha"         ,"ip": "10.99.4.4",  "public": "[json('null')]" }
+					]}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "FortigateB",
+			"dependsOn": [
+				"[resourceid('Microsoft.Resources/deployments', 'virtualNetwork')]",
+				"[resourceid('Microsoft.Resources/deployments', 'publicIpAddresses')]",
+				"[resourceid('Microsoft.Resources/deployments', 'globalObjects')]" 
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri":"https://www.holecek.eu/~oho/azure/fortigate.json",
+					"contentVersion":"1.0.0.0"
+				},
+				"parameters": {
+					"VmSize": { "value": "[variables('FortigateSize')]" },
+					"Sku": { "value": "[if(equals(parameters('LicenseType'),'Pay As You Go'),'fortinet_fg-vm_payg','fortinet_fg-vm')]" },
+					"FortiosVersion": { "value": "[parameters('FortiosVersion')]" },
+					"FortigateName": { "value": "[parameters('FortigateBName')]" },
+					"Username": { "value": "[parameters('AdminUsername')]" },
+					"Password": { "value": "[parameters('AdminPassword')]" },
+					"StorageAccountName": { "value": "[variables('StorageAccountName')]" },
+					"VirtualNetworkName": { "value": "[parameters('VirtualNetworkName')]" },
+					"Configuration": { "value": {
+						"haMy": "10.99.4.5",
+						"haPeer": "10.99.4.4",
+						"haPriority": "100",
+						"managementGw": "10.99.3.1",
+						"applicationId": "[parameters('HaApplicationId')]",
+						"applicationSecret": "[parameters('HaApplicationSecret')]",
+						"haPublicNicName": "[concat(parameters('FortigateBName'), '-port1')]",
+						"haPublicIpName": "FortiGate-shared-IP",
+						"haRoutingTableName": "RoutingTable-inside",
+						"haRouteName": "toDefault",
+						"haRoutingTableGw": "10.99.2.5"
+					}},
+					"Interfaces": { "value": [
+						{ "name": "port1"  ,"subnet": "outside"    ,"ip": "10.99.1.5",  "public": "[json('null')]" },
+						{ "name": "port2"  ,"subnet": "inside"     ,"ip": "10.99.2.5",  "public": "[json('null')]" },
+						{ "name": "port3"  ,"subnet": "management" ,"ip": "10.99.3.5",  "public": { "id": "[resourceid('Microsoft.Network/publicIPAddresses', concat(parameters('FortigateBName'), '-mgmt-IP'))]" } },
+						{ "name": "port4"  ,"subnet": "ha"         ,"ip": "10.99.4.5",  "public": "[json('null')]" }
+					]}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "LinuxClient",
+			"dependsOn": [
+				"[resourceid('Microsoft.Resources/deployments', 'virtualNetwork')]",
+				"[resourceid('Microsoft.Resources/deployments', 'publicIpAddresses')]",
+				"[resourceid('Microsoft.Resources/deployments', 'globalObjects')]" 
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri":"https://www.holecek.eu/~oho/azure/linux.json",
+					"contentVersion":"1.0.0.0"
+				},
+				"parameters": {
+					"VmSize": { "value": "[variables('LinuxClientSize')]" },
+					"LinuxClientName": { "value": "[parameters('LinuxClientName')]" },
+					"Username": { "value": "[parameters('AdminUsername')]" },
+					"Password": { "value": "[parameters('AdminPassword')]" },
+					"VirtualNetworkName": { "value": "[parameters('VirtualNetworkName')]" },
+					"PublicIp":     { "value": { "id": "[resourceid('Microsoft.Network/publicIPAddresses', 'LinuxClient-public-IP')]" } },
+					"Subnet":       { "value": "inside" },
+					"PrivateIp":    { "value": "10.99.2.100" }
+				}
+			}
+		}
+	]
+}

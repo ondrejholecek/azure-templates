@@ -1,0 +1,102 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"LinuxClientName": {
+			"defaultValue": "LinuxClient",
+			"type": "String"
+		},
+		"VmSize": {
+			"defaultValue": "Standard_B1ls",
+			"type": "String"
+		},
+		"Username": {
+			"defaultValue": "admin",
+			"type": "String"
+		},
+		"Password": {
+			"type": "String"
+		},
+		"VirtualNetworkName": {
+			"defaultValue": "VirtualNetwork",
+			"type": "String"
+		},
+		"PublicIp": {
+			"type": "Object"
+		},
+		"Subnet": {
+			"type": "String"
+		},
+		"PrivateIp": {
+			"type": "String"
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Network/networkInterfaces",
+			"apiVersion": "2018-12-01",
+			"name": "[concat(parameters('LinuxClientName'), '-eth0')]",
+			"location": "[resourceGroup().location]",
+			"properties": {
+				"ipConfigurations": [
+					{
+						"name": "ipconfig1",
+						"properties": {
+							"privateIPAddress": "[parameters('PrivateIp')]",
+							"privateIPAllocationMethod": "Static",
+							"subnet": {
+								"id": "[resourceid('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetworkName'), parameters('Subnet'))]"
+							},
+							"publicIPAddress": "[parameters('PublicIp')]",
+							"primary": true,
+							"privateIPAddressVersion": "IPv4"
+						}
+					}
+				],
+				"enableAcceleratedNetworking": false,
+				"enableIPForwarding": false,
+				"primary": false
+			}
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachines",
+			"apiVersion": "2018-10-01",
+			"name": "[parameters('LinuxClientName')]",
+			"dependsOn": [ 
+				"[concat(parameters('LinuxClientName'), '-eth0')]"
+			],
+			"location": "[resourceGroup().location]",
+			"properties": {
+				"hardwareProfile": {
+					"vmSize": "[parameters('VmSize')]"
+				},
+				"osProfile": {
+					"computerName": "[parameters('LinuxClientName')]",
+					"adminUsername": "[parameters('Username')]",
+					"adminPassword": "[parameters('Password')]"
+				},
+				"storageProfile": {
+					"imageReference": {
+						"publisher": "credativ",
+						"offer": "Debian",
+						"sku": "9",
+						"version": "latest"
+					},
+					"osDisk": {
+						"name": "[concat(parameters('LinuxClientName'), '-disk-os')]",
+						"createOption": "FromImage"
+					},
+					"dataDisks": []
+				},
+				"networkProfile": {
+					"networkInterfaces": [
+						{
+							"id": "[resourceid('Microsoft.Network/networkInterfaces', concat(parameters('LinuxClientName'), '-eth0'))]"
+						}
+					]
+				}
+			}
+		}
+	]
+}
+

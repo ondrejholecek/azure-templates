@@ -1,0 +1,35 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"TableName": {
+			"type": "String"
+		},
+		"Routes": {
+			"type": "Array"
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Network/routeTables",
+			"apiVersion": "2018-12-01",
+			"name": "[parameters('TableName')]",
+			"location": "[resourceGroup().location]",
+			"properties": {
+				"disableBgpRoutePropagation": false,
+				"copy": [{
+					"name": "routes",
+					"count": "[length(parameters('Routes'))]",
+					"input": {
+						"name": "[parameters('Routes')[copyIndex('routes')].name]",
+						"properties": {
+							"addressPrefix": "[parameters('Routes')[copyIndex('routes')].prefix]",
+							"nextHopType": "[parameters('Routes')[copyIndex('routes')].nh]",
+							"nextHopIpAddress": "[parameters('Routes')[copyIndex('routes')].gw]",
+						}
+					}
+				}]
+			}
+		},
+	]
+}

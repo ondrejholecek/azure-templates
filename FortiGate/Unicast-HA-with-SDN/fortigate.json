@@ -1,0 +1,161 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"FortigateName": {
+			"defaultValue": "unspecified",
+			"type": "String"
+		},
+		"VmSize": {
+			"defaultValue": "Standard_F4",
+			"type": "String"
+		},
+		"Sku": {
+			"defaultValue": "fortinet_fg-vm",
+			"type": "String"
+		},
+		"FortiosVersion": {
+			"defaultValue": "latest",
+			"type": "String"
+		},
+		"Username": {
+			"defaultValue": "admin",
+			"type": "String"
+		},
+		"Password": {
+			"type": "String"
+		},
+		"StorageAccountName": {
+			"defaultValue": "unspecified",
+			"type": "String"
+		},
+		"VirtualNetworkName": {
+			"defaultValue": "VirtualNetwork",
+			"type": "String"
+		},
+		"Interfaces": {
+			"defaultValue": [],
+			"type": "Array"
+		},
+		"Configuration": {
+			"type": "Object"
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Network/networkInterfaces",
+			"apiVersion": "2018-12-01",
+			"name": "[concat(parameters('FortigateName'), '-', parameters('Interfaces')[copyIndex()].name )]",
+			"copy": { 
+				"count": "[length(parameters('Interfaces'))]",
+				"name": "ifaceloop"
+			},
+			"location": "[resourceGroup().location]",
+			"properties": {
+				"ipConfigurations": [
+					{
+						"name": "ipconfig1",
+						"properties": {
+							"privateIPAddress": "[parameters('Interfaces')[copyIndex()].ip]",
+							"privateIPAllocationMethod": "Static",
+							"subnet": {
+								"id": "[resourceid('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetworkName'), parameters('Interfaces')[copyIndex()].subnet)]"
+							},
+							"publicIPAddress": "[parameters('Interfaces')[copyIndex()].public]",
+							"primary": true,
+							"privateIPAddressVersion": "IPv4"
+						}
+					}
+				],
+				"enableAcceleratedNetworking": false,
+				"enableIPForwarding": false,
+				"primary": false
+			}
+		},
+		{
+			"type": "Microsoft.Compute/disks",
+			"apiVersion": "2018-06-01",
+			"name": "[concat(parameters('FortigateName'), '-disk-logs')]",
+			"location": "[resourceGroup().location]",
+			"sku": {
+				"name": "StandardSSD_LRS",
+				"tier": "Standard"
+			},
+			"properties": {
+				"creationData": {
+					"createOption": "Empty"
+				},
+				"diskSizeGB": 30,
+				"diskIOPSReadWrite": 120,
+				"diskMBpsReadWrite": 25
+			}
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachines",
+			"apiVersion": "2018-10-01",
+			"name": "[parameters('FortigateName')]",
+			"dependsOn": [ 
+				"ifaceloop",
+				"[concat(parameters('FortigateName'), '-disk-logs')]"
+			],
+			"location": "[resourceGroup().location]",
+			"plan": {
+				"name": "[parameters('Sku')]",
+				"product": "fortinet_fortigate-vm_v5",
+				"publisher": "fortinet"
+			},
+			"properties": {
+				"hardwareProfile": {
+					"vmSize": "[parameters('VmSize')]"
+				},
+				"osProfile": {
+					"computerName": "[parameters('FortigateName')]",
+					"adminUsername": "[parameters('Username')]",
+					"adminPassword": "[parameters('Password')]",
+					"customData": "[base64(concat('config system global\n set admintimeout 480\n end\n', 'config system interface\n edit port1\n set mode dhcp\n set allowaccess ping https ssh \n next\n edit port2\n set mode dhcp\n set allowaccess ping ssh\n set defaultgw disable\n next\n edit port3\n set mode dhcp\n set allowaccess ping ssh https\n set defaultgw disable\n next\n edit port4\n set ip ', parameters('Configuration').haMy , ' 255.255.255.0\n set allowaccess ping\n next\n end\n', 'config system ha\n set group-name azuresupporttest\n set mode a-p\n set password azuresupporttest\n\n set hbdev port4 50\n set ha-mgmt-status enable\n config ha-mgmt-interfaces\n edit 1\n set interface port3\n set gateway ', parameters('Configuration').managementGw, '\n next\n end\n set override enable\n set priority ', parameters('Configuration').haPriority, '\n set unicast-hb enable\n set unicast-hb-peerip ', parameters('Configuration').haPeer, '\n end\n', 'config firewall policy\n edit 1\n set srcintf port2\n set dstintf port1\n set srcaddr all\n set dstaddr all\n set action accept\n set schedule always\n set service ALL\n set nat enable\n next\n end\n', 'config system sdn-connector\n edit Azure\n set type azure\n set ha-status enable\n set tenant-id ', subscription().tenantId, '\n set subscription-id ', subscription().subscriptionId, '\n set client-id ', parameters('Configuration').applicationId, '\n set client-secret ', parameters('Configuration').applicationSecret, '\n set resource-group ', resourceGroup().name,'\n config nic\n edit ', parameters('Configuration').haPublicNicName, '\n config ip\n edit ipconfig1\n set public-ip ', parameters('Configuration').haPublicIpName, '\n next\n end\n next\n end\n config route-table\n edit ', parameters('Configuration').haRoutingTableName, '\n config route\n edit ', parameters('Configuration').haRouteName, '\n set next-hop ', parameters('Configuration').haRoutingTableGw, '\n next\n end\n next\n end\n next\n end\n' ))]"
+				},
+				"storageProfile": {
+					"imageReference": {
+						"publisher": "fortinet",
+						"offer": "fortinet_fortigate-vm_v5",
+						"sku": "[parameters('Sku')]",
+						"version": "[parameters('FortiosVersion')]"
+					},
+					"osDisk": {
+						"name": "[concat(parameters('FortigateName'), '-disk-os')]",
+						"createOption": "FromImage"
+					},
+					"dataDisks": [
+						{
+							"lun": 0,
+							"name": "[concat(parameters('FortigateName'), '-disk-logs')]",
+							"createOption": "attach",
+							"managedDisk": {
+								"id": "[resourceid('Microsoft.Compute/disks', concat(parameters('FortigateName'), '-disk-logs'))]"
+							}
+						}
+					]
+				},
+				"networkProfile": {
+					"copy": [{
+							"name": "networkInterfaces",
+							"count": "[length(parameters('Interfaces'))]",
+							"input": {
+								"id": "[resourceid('Microsoft.Network/networkInterfaces', concat(parameters('FortigateName'), '-', parameters('Interfaces')[copyIndex('networkInterfaces')].name))]",
+								"properties": {
+									"primary": "[if(equals(copyIndex('networkInterfaces'), 0), 'true', 'false')]"
+								 }
+							}
+					}]
+				},
+				"diagnosticsProfile": {
+					"bootDiagnostics": {
+						"enabled": "true",
+						"storageUri": "[concat('https://',parameters('StorageAccountName'),'.blob.core.windows.net')]"
+					}
+				}
+			}
+		}
+
+	]
+}

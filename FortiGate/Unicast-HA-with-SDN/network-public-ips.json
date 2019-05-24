@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"PublicIPs": {
+			"type": "Array"
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Network/publicIPAddresses",
+			"apiVersion": "2018-12-01",
+			"name": "[parameters('PublicIPs')[copyIndex()].name]",
+			"copy": { 
+				"count": "[length(parameters('PublicIPs'))]",
+				"name": "pubips"
+			},
+			"location": "[resourceGroup().location]",
+			"sku": {
+				"name": "Basic",
+				"tier": "Regional"
+			},
+			"properties": {
+				"publicIPAddressVersion": "IPv4",
+				"publicIPAllocationMethod": "Static",
+				"idleTimeoutInMinutes": 4,
+				"dnsSettings": {
+					"domainNameLabel": "[parameters('PublicIPs')[copyIndex()].hostname]"
+				}
+			}
+		}
+	]
+}
