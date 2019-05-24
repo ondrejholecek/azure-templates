@@ -1,3 +1,5 @@
+# Unicast HA with SDN connector and client VM
+
 ## About
 
 Azure template meant for support people to quickly and easily deploy a pair of FortiGates with (unicast) HA and preconfigured Azure SDN connector (with outside public IP and inside default route manipulation). The template also deploys a preconfigured Linux client VM on the private ("inside") network with default route through the master FortiGate.
