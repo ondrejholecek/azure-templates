@@ -63,6 +63,14 @@
 		"FortigateSize": "Standard_F4",
 		"LinuxClientSize": "Standard_B1ls"
 	},
+	"outputs": {
+		" FortigateA management GUI": { "type": "String", "value": "[concat('https://', reference('publicIpAddresses').outputs.ip2.value)]" },
+		" FortigateA management SSH": { "type": "String", "value": "[concat('ssh ', parameters('AdminUsername'), '@', reference('publicIpAddresses').outputs.ip2.value)]" },
+		" FortigateB management GUI": { "type": "String", "value": "[concat('https://', reference('publicIpAddresses').outputs.ip3.value)]" },
+		" FortigateB management SSH": { "type": "String", "value": "[concat('ssh ', parameters('AdminUsername'), '@', reference('publicIpAddresses').outputs.ip3.value)]" },
+		" Fortigate floating IP"    : { "type": "String", "value": "[reference('publicIpAddresses').outputs.ip1.value]" },
+		" Linux Client access SSH"  : { "type": "String", "value": "[concat('ssh ', parameters('AdminUsername'), '@', reference('publicIpAddresses').outputs.ip4.value)]" }
+	},
 	"resources": [
 		{
 			"type": "Microsoft.Resources/deployments",
@@ -141,7 +149,11 @@
 						{ "name": "[concat(parameters('FortigateAName'), '-mgmt-IP')]" ,"hostname": "[concat('fgtapublicip', uniqueString(resourceGroup().id, deployment().name))]"  },
 						{ "name": "[concat(parameters('FortigateBName'), '-mgmt-IP')]" ,"hostname": "[concat('fgtbpublicip', uniqueString(resourceGroup().id, deployment().name))]"  },
 						{ "name": "LinuxClient-public-IP"                              ,"hostname": "[concat('linpublicip' , uniqueString(resourceGroup().id, deployment().name))]"  }
-					]}
+					]},
+					"Return1": { "value": "FortiGate-shared-IP" },
+					"Return2": { "value": "[concat(parameters('FortigateAName'), '-mgmt-IP')]" },
+					"Return3": { "value": "[concat(parameters('FortigateBName'), '-mgmt-IP')]" },
+					"Return4": { "value": "LinuxClient-public-IP" }
 				}
 			}
 		},

@@ -4,6 +4,53 @@
 	"parameters": {
 		"PublicIPs": {
 			"type": "Array"
+		},
+		"Return1": { "type": "String", "defaultValue": "" },
+		"Return2": { "type": "String", "defaultValue": "" },
+		"Return3": { "type": "String", "defaultValue": "" },
+		"Return4": { "type": "String", "defaultValue": "" },
+		"Return5": { "type": "String", "defaultValue": "" },
+		"Return6": { "type": "String", "defaultValue": "" },
+		"Return7": { "type": "String", "defaultValue": "" },
+		"Return8": { "type": "String", "defaultValue": "" },
+		"Return9": { "type": "String", "defaultValue": "" }
+	},
+	"outputs": {
+		"Ip1": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return1'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return1'))).IpAddress)]"
+		},
+		"Ip2": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return2'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return2'))).IpAddress)]"
+		},
+		"Ip3": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return3'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return3'))).IpAddress)]"
+		},
+		"Ip4": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return4'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return4'))).IpAddress)]"
+		},
+		"Ip5": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return5'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return5'))).IpAddress)]"
+		},
+		"Ip6": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return6'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return6'))).IpAddress)]"
+		},
+		"Ip7": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return7'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return7'))).IpAddress)]"
+		},
+		"Ip8": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return8'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return8'))).IpAddress)]"
+		},
+		"Ip9": {
+			"type": "String",
+			"value": "[if(equals(parameters('Return9'),''),'',reference(resourceid('Microsoft.Network/publicIPAddresses', parameters('Return9'))).IpAddress)]"
 		}
 	},
 	"resources": [
