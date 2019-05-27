@@ -98,8 +98,11 @@ When the deployment is finished, you can switch to "Outputs" section (still on t
 
 ![Outputs](https://raw.githubusercontent.com/ondrejholecek/azure-templates/master/FortiGate/Unicast-HA-with-SDN/outputs.png)
 
+You can of course also with the IP addresses by inspecting the PublicIP object in your resource group.
 
 ## One click deployment
+
+Ready? Go!
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fondrejholecek%2Fazure-templates%2Fmaster%2FFortiGate%2FUnicast-HA-with-SDN%2Fmain.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
