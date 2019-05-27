@@ -30,6 +30,16 @@
 			"defaultValue": "FortiGateB",
 			"metadata": { "description": "Name of the second FortiGate VM. Its interface names will be also based on this." }
 		},
+		"FortigateALicense": {
+			"type": "String",
+			"defaultValue": "",
+			"metadata": { "description": "Base64 encoded license file for the first FortiGate. Only fill when BYOL \"License Type\" is selected." }
+		},
+		"FortigateBLicense": {
+			"type": "String",
+			"defaultValue": "",
+			"metadata": { "description": "Base64 encoded license file for the second FortiGate. Only fill when BYOL \"License Type\" is selected." }
+		},
 		"LinuxClientName": {
 			"type": "String",
 			"defaultValue": "LinuxClient",
@@ -48,10 +58,12 @@
 			"type": "SecureString"
 		},
 		"HaApplicationId": {
-			"type": "String"
+			"type": "String",
+			"metadata": { "description": "Application (client) ID of the application than can make changes to routing tables and public IP address assignments." }
 		},
 		"HaApplicationSecret": {
-			"type": "String"
+			"type": "String",
+			"metadata": { "description": "Client secret key for the for the Application ID specified above." }
 		},
 		"MyIpAddress": {
 			"type": "String",
@@ -175,6 +187,7 @@
 				"parameters": {
 					"VmSize": { "value": "[variables('FortigateSize')]" },
 					"Sku": { "value": "[if(equals(parameters('LicenseType'),'Pay As You Go'),'fortinet_fg-vm_payg','fortinet_fg-vm')]" },
+					"License": { "value": "[parameters('FortigateALicense')]" },
 					"FortiosVersion": { "value": "[parameters('FortiosVersion')]" },
 					"FortigateName": { "value": "[parameters('FortigateAName')]" },
 					"Username": { "value": "[parameters('AdminUsername')]" },
@@ -221,6 +234,7 @@
 				"parameters": {
 					"VmSize": { "value": "[variables('FortigateSize')]" },
 					"Sku": { "value": "[if(equals(parameters('LicenseType'),'Pay As You Go'),'fortinet_fg-vm_payg','fortinet_fg-vm')]" },
+					"License": { "value": "[parameters('FortigateBLicense')]" },
 					"FortiosVersion": { "value": "[parameters('FortiosVersion')]" },
 					"FortigateName": { "value": "[parameters('FortigateBName')]" },
 					"Username": { "value": "[parameters('AdminUsername')]" },
