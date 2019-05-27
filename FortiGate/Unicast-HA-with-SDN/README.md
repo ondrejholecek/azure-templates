@@ -10,7 +10,7 @@ This is **not official** Fortinet repository and the templates here should not b
 
 After deployment the network topology will look like this:
 
-![Example Diagram](https://raw.githubusercontent.com/ondrejholecek/azure-templates/master/FortiGate/Unicast-HA-with-SDN/azure_github_ha.png)
+![Network diagram](https://raw.githubusercontent.com/ondrejholecek/azure-templates/master/FortiGate/Unicast-HA-with-SDN/diagram.png)
 
 ## Automatic configuration
 
