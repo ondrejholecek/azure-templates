@@ -47,6 +47,13 @@
 	},
 	"variables": {
 		"config": "[concat('config system global\n set admintimeout 480\n end\n', 'config system interface\n edit port1\n set mode dhcp\n set allowaccess ping https ssh \n next\n edit port2\n set mode dhcp\n set allowaccess ping ssh\n set defaultgw disable\n next\n edit port3\n set mode dhcp\n set allowaccess ping ssh https\n set defaultgw disable\n next\n edit port4\n set ip ', parameters('Configuration').haMy , ' 255.255.255.0\n set allowaccess ping\n next\n end\n', 'config system ha\n set group-name azuresupporttest\n set mode a-p\n set password azuresupporttest\n\n set hbdev port4 50\n set ha-mgmt-status enable\n config ha-mgmt-interfaces\n edit 1\n set interface port3\n set gateway ', parameters('Configuration').managementGw, '\n next\n end\n set override enable\n set priority ', parameters('Configuration').haPriority, '\n set unicast-hb enable\n set unicast-hb-peerip ', parameters('Configuration').haPeer, '\n end\n', 'config firewall policy\n edit 1\n set srcintf port2\n set dstintf port1\n set srcaddr all\n set dstaddr all\n set action accept\n set schedule always\n set service ALL\n set nat enable\n next\n end\n', 'config system sdn-connector\n edit Azure\n set type azure\n set ha-status enable\n set tenant-id ', subscription().tenantId, '\n set subscription-id ', subscription().subscriptionId, '\n set client-id ', parameters('Configuration').applicationId, '\n set client-secret ', parameters('Configuration').applicationSecret, '\n set resource-group ', resourceGroup().name,'\n config nic\n edit ', parameters('Configuration').haPublicNicName, '\n config ip\n edit ipconfig1\n set public-ip ', parameters('Configuration').haPublicIpName, '\n next\n end\n next\n end\n config route-table\n edit ', parameters('Configuration').haRoutingTableName, '\n config route\n edit ', parameters('Configuration').haRouteName, '\n set next-hop ', parameters('Configuration').haRoutingTableGw, '\n next\n end\n next\n end\n next\n end\n' )]",
+		"customdata": "[base64(if(equals(parameters('License'),''),variables('config'),concat('Content-Type: multipart/mixed; boundary=\"===============0086047718136476635==\"\nMIME-Version: 1.0\n\n--===============0086047718136476635==\nContent-Type: text/plain; charset=\"us-ascii\"\nMIME-Version: 1.0\nContent-Transfer-Encoding: 7bit\nContent-Disposition: attachment; filename=\"config\"\n\n', variables('config'), '\n--===============0086047718136476635==\nContent-Type: text/plain; charset=\"us-ascii\"\nMIME-Version: 1.0\nContent-Transfer-Encoding: 7bit\nContent-Disposition: attachment; filename=\"license.txt\"\n\n', base64ToString(parameters('License')), '\n--===============0086047718136476635==--\n')))]"
+	},
+	"outputs": {
+		"cloudinit": {
+			"type": "String",
+			"value": "[variables('customdata')]"
+		}
 	},
 	"resources": [
 		{
@@ -119,7 +126,7 @@
 					"computerName": "[parameters('FortigateName')]",
 					"adminUsername": "[parameters('Username')]",
 					"adminPassword": "[parameters('Password')]",
-					"customData": "[base64(if(equals(parameters('License'),''),variables('config'),concat('Content-Type: multipart/mixed; boundary=\"===============0086047718136476635==\"\nMIME-Version: 1.0\n\n--===============0086047718136476635==\nContent-Type: text/plain; charset=\"us-ascii\"\nMIME-Version: 1.0\nContent-Transfer-Encoding: 7bit\nContent-Disposition: attachment; filename=\"config\"\n\n', variables('config'), '\n--===============0086047718136476635==\nContent-Type: text/plain; charset=\"us-ascii\"\nMIME-Version: 1.0\nContent-Transfer-Encoding: 7bit\nContent-Disposition: attachment; filename=\"license.txt\"\n\n', base64ToString(parameters('License')), '\n--===============0086047718136476635==--\n')))]"
+					"customData": "[variables('customdata')]"
 				},
 				"storageProfile": {
 					"imageReference": {
