@@ -112,9 +112,10 @@
 				"parameters": {
 					"TableName": { "value": "RoutingTable-inside" },
 					"Routes": { "value": [
-						{ "name": "toDefault"     ,"prefix": "0.0.0.0/0"         ,"nh": "VirtualAppliance" ,"gw": "10.99.2.4" },
-						{ "name": "PragueOffice"  ,"prefix": "193.85.189.16/28"  ,"nh": "Internet"         ,"gw": "" },
-						{ "name": "PragueLab"     ,"prefix": "193.86.26.192/28"  ,"nh": "Internet"         ,"gw": "" },
+						{ "name": "toDefault"       ,"prefix": "0.0.0.0/0"         ,"nh": "VirtualAppliance" ,"gw": "10.99.2.4" },
+						{ "name": "PragueOffice"    ,"prefix": "193.85.189.16/28"  ,"nh": "Internet"         ,"gw": "" },
+						{ "name": "PragueLab"       ,"prefix": "193.86.26.192/28"  ,"nh": "Internet"         ,"gw": "" },
+						{ "name": "FrankfurtOffice" ,"prefix": "213.157.29.160/29" ,"nh": "Internet"         ,"gw": "" },
 						{ "name": "MyIP", "prefix": "[concat(parameters('MyIpAddress'), '/32')]", "nh": "Internet", "gw": "" }
 					]}
 				}
